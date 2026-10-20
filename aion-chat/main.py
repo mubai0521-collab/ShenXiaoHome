@@ -5,6 +5,7 @@ FastAPI app 创建、lifespan、静态文件挂载、路由注册
 
 import asyncio, json, logging
 from contextlib import asynccontextmanager
+from shenxiao_runtime import upstream_runtime_enabled, chat_only_lifespan
 from pathlib import Path
 import sys
 
@@ -153,7 +154,7 @@ async def _auto_digest_loop():
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def upstream_lifespan(app: FastAPI):
     await init_db()
     try:
         await post_sentinel.start()
@@ -256,6 +257,22 @@ async def lifespan(app: FastAPI):
             cam.close_camera()
         finally:
             await close_embedding_client()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # The upstream worker bundle includes PC collection, camera restore, social
+    # patrol and model-driven background jobs. It is never started by default.
+    if upstream_runtime_enabled():
+        async with upstream_lifespan(app):
+            yield
+    else:
+        async with chat_only_lifespan(
+            initialize=init_db,
+            restore=restore_active_windows,
+            close=close_embedding_client,
+        ):
+            yield
 
 
 app = FastAPI(lifespan=lifespan)

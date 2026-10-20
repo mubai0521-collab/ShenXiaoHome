@@ -19,5 +19,5 @@ pywin32
 psutil
 akshare
 chinese-calendar
-mcp
+mcp==1.27.0
 cryptography

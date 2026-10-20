@@ -74,17 +74,8 @@ def _is_known_tool_transport_failure(error: Exception) -> bool:
     return False
 
 # ── 默认配置 ──────────────────────────────────────
-_DEFAULT_CONFIG = {
-    "servers": [
-        {
-            "name": "AI小镇",
-            "type": "http",
-            "url": "https://aisay.top/chatroom/mcp",
-            "headers": {},
-            "enabled": True
-        }
-    ]
-}
+# A fresh home has no third-party connections. Add each server explicitly.
+_DEFAULT_CONFIG = {"servers": []}
 
 
 def _load_config() -> dict:
@@ -97,7 +88,7 @@ def _load_config() -> dict:
     MCP_SERVERS_PATH.write_text(
         json.dumps(_DEFAULT_CONFIG, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    return dict(_DEFAULT_CONFIG)
+    return json.loads(json.dumps(_DEFAULT_CONFIG))
 
 
 def _save_config(cfg: dict):
@@ -144,6 +135,8 @@ class MCPManager:
                 break
         if not server_cfg:
             raise ValueError(f"未找到 MCP Server 配置: {server_name}")
+        if not server_cfg.get("enabled", True):
+            raise ValueError(f"MCP Server 已停用: {server_name}")
 
         srv_type = server_cfg.get("type", "http")
 
@@ -206,7 +199,7 @@ class MCPManager:
             url=url,
             headers=headers,
             httpx_client_factory=lambda **kw: httpx.AsyncClient(
-                verify=False, proxy=None, **kw
+                verify=True, proxy=None, **kw
             ),
         )
         streams = await transport_cm.__aenter__()

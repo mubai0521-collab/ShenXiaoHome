@@ -437,7 +437,7 @@ def replace_antigravity_models(models: dict, *, persist: bool = False) -> None:
 MODELS = {}
 refresh_custom_models()
 
-DEFAULT_MODEL = "Gemini-3.5-flash"
+DEFAULT_MODEL = "Codex-5.6-Sol"
 
 
 def model_supports_safe_live(model_key: str | None) -> bool:
